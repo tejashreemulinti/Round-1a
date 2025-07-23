@@ -51,7 +51,7 @@ class PDFOutlineExtractor:
             blocks = page.get_text("dict")
             
             page_data = {
-                'page_num': page_num,
+                'page_num': page_num + 1,  # 1-based page numbering to match test cases
                 'lines': []
             }
             
@@ -154,11 +154,27 @@ class PDFOutlineExtractor:
 
     def determine_heading_level(self, text, font_size, size_levels):
         """Determine heading level based on font size and content"""
-        # First check if font size matches predefined levels
+        # Pattern-based level detection (more precise for numbered sections)
+        # Check for numbered patterns like "1.", "2.1", "2.1.1", etc.
+        numbered_match = re.match(r'^(\d+(?:\.\d+)*)', text)
+        if numbered_match:
+            prefix = numbered_match.group(1)
+            dot_count = prefix.count('.')
+            
+            if dot_count == 0:  # "1", "2", etc.
+                return 'H1'
+            elif dot_count == 1:  # "2.1", "3.2", etc.
+                return 'H2'
+            elif dot_count == 2:  # "2.1.1", "3.2.1", etc.
+                return 'H3'
+            else:  # "2.1.1.1" or more nested
+                return 'H4' if dot_count == 3 else 'H3'
+        
+        # Check if font size matches predefined levels
         if font_size in size_levels:
             return size_levels[font_size]
         
-        # Pattern-based level detection
+        # General pattern-based detection
         for pattern in self.heading_patterns:
             match = re.match(pattern, text, re.IGNORECASE)
             if match:
@@ -195,10 +211,11 @@ class PDFOutlineExtractor:
             
             for line in page['lines']:
                 text = line['text'].strip()
-                if (line['font_size'] == max_font_size and 
-                    len(text) > 5 and 
-                    len(text) < 200 and
-                    not any(word in text.lower() for word in self.anti_heading_words)):
+                if (line['font_size'] >= max_font_size * 0.95 and  # Allow slight variation
+                    len(text) > 3 and 
+                    len(text) < 300 and  # Increased limit for longer titles
+                    not any(word in text.lower() for word in self.anti_heading_words) and
+                    not re.match(r'^\d+\.', text)):  # Skip numbered headings for title
                     
                     candidates.append({
                         'text': text,
@@ -210,16 +227,29 @@ class PDFOutlineExtractor:
         if candidates:
             # Sort by score and return best candidate
             candidates.sort(key=lambda x: x['score'], reverse=True)
-            return candidates[0]['text']
+            best_title = candidates[0]['text']
+            
+            # Some documents might have multiple title parts, try to combine them
+            if len(candidates) > 1 and candidates[0]['page'] == candidates[1]['page']:
+                # Check if second candidate is on same page and similar font size
+                second = candidates[1]
+                if (abs(candidates[0]['font_size'] - second['font_size']) < 2 and
+                    not re.match(r'^\d+\.', second['text'])):
+                    best_title = f"{best_title} {second['text']}"
+            
+            return best_title
         
         # Fallback: return first significant text
         for page in pages_data[:2]:
             for line in page['lines']:
                 text = line['text'].strip()
-                if len(text) > 10 and not text.isdigit():
+                if (len(text) > 10 and 
+                    not text.isdigit() and 
+                    not re.match(r'^\d+\.', text)):
                     return text
         
-        return "Untitled Document"
+        # Return empty string if no suitable title found (as in test cases 4 & 5)
+        return ""
 
     def score_title_candidate(self, text):
         """Score title candidates based on various criteria"""
@@ -247,7 +277,14 @@ class PDFOutlineExtractor:
 
     def clean_heading_text(self, text):
         """Clean and normalize heading text"""
-        # Remove numbering prefix but keep the meaningful part
+        # Keep the original text for numbered sections as they appear in test cases
+        # Only clean if it's not a numbered section
+        
+        # Check if it's a numbered section (like "1. Introduction" or "2.1 Overview")
+        if re.match(r'^\d+\.', text) or re.match(r'^\d+\.\d+', text):
+            return text.strip()
+        
+        # For other patterns, try to extract meaningful part
         for pattern in self.heading_patterns:
             match = re.match(pattern, text, re.IGNORECASE)
             if match and len(match.groups()) >= 2:
@@ -255,8 +292,9 @@ class PDFOutlineExtractor:
                 if cleaned:
                     return cleaned
         
-        # Remove common prefixes
-        text = re.sub(r'^(Chapter|Section|Part)\s+\d+[:\.\s]*', '', text, flags=re.IGNORECASE)
+        # Remove common prefixes only if no number prefix
+        if not re.match(r'^\d+', text):
+            text = re.sub(r'^(Chapter|Section|Part)\s+\d+[:\.\s]*', '', text, flags=re.IGNORECASE)
         
         return text.strip()
 
