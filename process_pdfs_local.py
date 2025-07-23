@@ -299,14 +299,14 @@ class PDFOutlineExtractor:
         return text.strip()
 
     def extract_outline(self, pdf_path):
-        """Main method to extract outline from PDF - simplified version for testing"""
+        """Main method to extract outline from PDF - uses accurate implementation"""
         try:
             logger.info(f"Processing {pdf_path}")
             
-            # Use the main file's implementation by importing it
-            from process_pdfs import PDFOutlineExtractor as MainExtractor
-            main_extractor = MainExtractor()
-            return main_extractor.extract_outline(pdf_path)
+            # Use the final implementation
+            from process_pdfs import UltraAccuratePDFExtractor
+            extractor = UltraAccuratePDFExtractor()
+            return extractor.extract_outline(pdf_path)
             
         except Exception as e:
             logger.error(f"Error processing {pdf_path}: {str(e)}")
