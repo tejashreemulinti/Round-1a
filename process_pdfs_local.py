@@ -50,7 +50,7 @@ class PDFOutlineExtractor:
             blocks = page.get_text("dict")
             
             page_data = {
-                'page_num': page_num + 1,
+                'page_num': page_num,
                 'lines': []
             }
             

@@ -79,9 +79,9 @@ Each PDF generates a JSON file like this:
 {
   "title": "Document Title",
   "outline": [
-    {"level": "H1", "text": "Main Section", "page": 1},
-    {"level": "H2", "text": "Subsection", "page": 2},
-    {"level": "H3", "text": "Sub-subsection", "page": 3}
+    {"level": "H1", "text": "Main Section", "page": 0},
+    {"level": "H2", "text": "Subsection", "page": 1},
+    {"level": "H3", "text": "Sub-subsection", "page": 2}
   ]
 }
 ```

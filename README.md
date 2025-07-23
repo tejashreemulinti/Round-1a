@@ -123,17 +123,17 @@ Each PDF generates a JSON file with this structure:
     {
       "level": "H1",
       "text": "Main Section",
-      "page": 1
+      "page": 0
     },
     {
       "level": "H2", 
       "text": "Subsection",
-      "page": 2
+      "page": 1
     },
     {
       "level": "H3",
       "text": "Sub-subsection", 
-      "page": 3
+      "page": 2
     }
   ]
 }
