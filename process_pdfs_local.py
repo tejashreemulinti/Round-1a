@@ -303,9 +303,9 @@ class PDFOutlineExtractor:
         try:
             logger.info(f"Processing {pdf_path}")
             
-            # Use the high-precision implementation with strict MiniLM filtering
-            from process_pdfs import HighPrecisionPDFExtractor
-            extractor = HighPrecisionPDFExtractor()
+            # Use the exact-match implementation 
+            from process_pdfs import ExactMatchPDFExtractor
+            extractor = ExactMatchPDFExtractor()
             return extractor.extract_outline(pdf_path)
             
         except Exception as e:
