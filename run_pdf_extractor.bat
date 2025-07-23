@@ -1,4 +1,5 @@
 @echo off
+title PDF Outline Extractor - Windows
 echo ========================================
 echo PDF Outline Extractor - Windows Setup
 echo ========================================
@@ -13,8 +14,8 @@ if %errorlevel% neq 0 (
 
 echo.
 echo 2. Running the PDF extractor...
-python process_pdfs_local_fixed.py
+python process_pdfs_local.py
 
 echo.
-echo 3. Process complete!
+echo Done!
 pause

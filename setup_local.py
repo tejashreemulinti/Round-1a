@@ -135,6 +135,7 @@ def main():
     print("\n📋 Next steps:")
     print("1. Place PDF files in the 'input' folder")
     print("2. Run: python process_pdfs_local.py")
+    print("   OR double-click: run_pdf_extractor.bat")
     print("3. Check results in the 'output' folder")
     print("\n📖 See README_LOCAL.md for detailed instructions")
     

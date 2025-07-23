@@ -5,6 +5,7 @@ from pathlib import Path
 import fitz  # PyMuPDF
 from collections import defaultdict, Counter
 import logging
+import tempfile
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -321,37 +322,101 @@ class PDFOutlineExtractor:
             logger.error(f"Error processing {pdf_path}: {str(e)}")
             return {"title": "Error Processing Document", "outline": []}
 
-def process_pdfs_local(input_folder="input", output_folder="output"):
-    """Process PDFs from local folders instead of Docker paths"""
-    # Use current directory + specified folders
-    current_dir = Path.cwd()
-    input_dir = current_dir / input_folder
-    output_dir = current_dir / output_folder
+def get_safe_directory(folder_name):
+    """Get a safe directory path that we can write to on Windows"""
+    # Try user's Documents folder first
+    try:
+        documents_path = Path.home() / "Documents" / "PDF_Extractor" / folder_name
+        documents_path.mkdir(parents=True, exist_ok=True)
+        # Test if we can write to it
+        test_file = documents_path / "test_write.tmp"
+        test_file.write_text("test")
+        test_file.unlink()
+        return documents_path
+    except (PermissionError, OSError):
+        pass
     
-    # Create output directory if it doesn't exist
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # Try Desktop
+    try:
+        desktop_path = Path.home() / "Desktop" / "PDF_Extractor" / folder_name
+        desktop_path.mkdir(parents=True, exist_ok=True)
+        test_file = desktop_path / "test_write.tmp"
+        test_file.write_text("test")
+        test_file.unlink()
+        return desktop_path
+    except (PermissionError, OSError):
+        pass
+    
+    # Try current directory
+    try:
+        current_dir = Path.cwd()
+        target_dir = current_dir / folder_name
+        target_dir.mkdir(parents=True, exist_ok=True)
+        test_file = target_dir / "test_write.tmp"
+        test_file.write_text("test")
+        test_file.unlink()
+        return target_dir
+    except (PermissionError, OSError):
+        pass
+    
+    # Try temp directory as last resort
+    try:
+        import tempfile
+        temp_dir = Path(tempfile.gettempdir()) / "PDF_Extractor" / folder_name
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        return temp_dir
+    except (PermissionError, OSError):
+        pass
+    
+    # If all else fails, return None
+    return None
+
+def process_pdfs_local(input_folder="input", output_folder="output"):
+    """Process PDFs from local folders with Windows permission handling"""
+    print("🚀 PDF Outline Extractor - Local Version")
+    print("=" * 50)
+    
+    # Try to get safe directories
+    print("📁 Setting up directories...")
+    
+    input_dir = get_safe_directory(input_folder)
+    output_dir = get_safe_directory(output_folder)
+    
+    if input_dir is None or output_dir is None:
+        print("❌ Cannot create directories due to permission issues.")
+        print("\n🔧 Solutions:")
+        print("1. Run as Administrator")
+        print("2. Move the script to a folder you have write access to (like Desktop)")
+        print("3. Use a different folder location")
+        return False
+    
+    print(f"✅ Input directory: {input_dir}")
+    print(f"✅ Output directory: {output_dir}")
     
     if not input_dir.exists():
-        logger.error(f"Input directory {input_dir} does not exist")
-        print(f"Please create an '{input_folder}' folder and place your PDF files there.")
-        return
+        print(f"📁 Created input directory: {input_dir}")
+        input_dir.mkdir(parents=True, exist_ok=True)
     
     # Get all PDF files
     pdf_files = list(input_dir.glob("*.pdf"))
     
     if not pdf_files:
-        logger.warning(f"No PDF files found in {input_dir}")
-        print(f"Please place PDF files in the '{input_folder}' folder.")
-        return
+        print(f"\n⚠️  No PDF files found in: {input_dir}")
+        print(f"\n📝 Next steps:")
+        print(f"1. Copy your PDF files to: {input_dir}")
+        print(f"2. Run this script again")
+        print(f"\n💡 You can also drag & drop PDF files into that folder!")
+        return False
     
     logger.info(f"Found {len(pdf_files)} PDF files to process")
-    print(f"Processing {len(pdf_files)} PDF files...")
+    print(f"📄 Found {len(pdf_files)} PDF files to process...")
     
     extractor = PDFOutlineExtractor()
     
+    success_count = 0
     for pdf_file in pdf_files:
         try:
-            print(f"Processing: {pdf_file.name}")
+            print(f"\n🔄 Processing: {pdf_file.name}")
             
             # Extract outline
             result = extractor.extract_outline(pdf_file)
@@ -364,29 +429,43 @@ def process_pdfs_local(input_folder="input", output_folder="output"):
             
             logger.info(f"Processed {pdf_file.name} -> {output_file.name}")
             print(f"✅ Generated: {output_file.name}")
+            print(f"   📊 Found {len(result['outline'])} headings")
+            print(f"   📝 Title: {result['title'][:50]}{'...' if len(result['title']) > 50 else ''}")
+            
+            success_count += 1
             
         except Exception as e:
             logger.error(f"Failed to process {pdf_file.name}: {str(e)}")
             print(f"❌ Failed to process: {pdf_file.name}")
+            print(f"   Error: {str(e)}")
             
             # Create empty result for failed files
-            error_result = {"title": "Error Processing Document", "outline": []}
-            output_file = output_dir / f"{pdf_file.stem}.json"
-            
-            with open(output_file, "w", encoding='utf-8') as f:
-                json.dump(error_result, f, indent=4)
+            try:
+                error_result = {"title": "Error Processing Document", "outline": []}
+                output_file = output_dir / f"{pdf_file.stem}.json"
+                
+                with open(output_file, "w", encoding='utf-8') as f:
+                    json.dump(error_result, f, indent=4)
+                print(f"   💾 Created error placeholder: {output_file.name}")
+            except Exception:
+                print(f"   ⚠️  Could not create error file")
+    
+    print(f"\n✨ Processing complete!")
+    print(f"📊 Successfully processed: {success_count}/{len(pdf_files)} files")
+    print(f"📁 Results saved to: {output_dir}")
+    
+    return True
 
 if __name__ == "__main__":
-    print("🚀 PDF Outline Extractor - Local Version")
-    print("=" * 50)
-    
-    # You can change these folder names if needed
-    input_folder = "input"
-    output_folder = "output"
-    
     logger.info("Starting PDF outline extraction (local mode)")
-    process_pdfs_local(input_folder, output_folder)
+    success = process_pdfs_local("input", "output")
     
-    print("\n✨ Processing complete!")
-    print(f"📁 Check the '{output_folder}' folder for JSON results.")
+    if success:
+        print("\n🎉 All done! Check the output folder for your JSON files.")
+    else:
+        print("\n⚠️  Process completed with issues. See messages above.")
+    
+    # Keep window open on Windows
+    input("\nPress Enter to exit...")
+    
     logger.info("Completed PDF outline extraction")

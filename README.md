@@ -85,12 +85,14 @@ PDFOutlineExtractor
 
 ## Build and Run Instructions
 
-### Building the Docker Image
+### Docker Version (Linux/Server)
+
+#### Building the Docker Image
 ```bash
 docker build --platform linux/amd64 -t pdf-outline-extractor .
 ```
 
-### Running the Solution
+#### Running the Solution
 ```bash
 docker run --rm \
   -v $(pwd)/input:/app/input:ro \
@@ -99,7 +101,28 @@ docker run --rm \
   pdf-outline-extractor
 ```
 
+### Local Version (Windows/Development)
+
+#### Quick Start with Batch File
+```bash
+# Double-click: run_pdf_extractor.bat
+# OR run in command prompt:
+run_pdf_extractor.bat
+```
+
+#### Manual Setup
+```bash
+# Install dependencies
+pip install PyMuPDF regex
+
+# Run the extractor
+python process_pdfs_local.py
+```
+
 ### Expected Directory Structure
+The local version automatically creates safe directories:
+
+**For Docker:**
 ```
 input/           # Place PDF files here
 ├── document1.pdf
@@ -110,6 +133,19 @@ output/          # JSON results appear here
 ├── document1.json
 ├── document2.json
 └── ...
+```
+
+**For Local (Windows):**
+```
+Documents/PDF_Extractor/    # Automatically created
+├── input/                  # Place PDF files here
+│   ├── document1.pdf
+│   ├── document2.pdf
+│   └── ...
+└── output/                 # JSON results appear here
+    ├── document1.json
+    ├── document2.json
+    └── ...
 ```
 
 ## Output Format
@@ -168,6 +204,26 @@ Each PDF generates a JSON file with this structure:
 - **Parsing Errors**: Return empty outline for unparseable PDFs
 - **Memory Issues**: Implemented safeguards and limits
 - **Format Issues**: Robust fallbacks for edge cases
+
+### Windows-Specific Issues
+
+**Permission Errors:**
+- The local version automatically finds writable directories
+- Falls back to Documents/PDF_Extractor if current folder is restricted
+- Run as Administrator if issues persist
+
+**Common Solutions:**
+```bash
+# Option 1: Use the batch file
+run_pdf_extractor.bat
+
+# Option 2: Run as Administrator
+Right-click Command Prompt → "Run as administrator"
+
+# Option 3: Manual directory creation
+mkdir "%USERPROFILE%\Documents\PDF_Extractor\input"
+mkdir "%USERPROFILE%\Documents\PDF_Extractor\output"
+```
 
 ## Testing Strategy
 
