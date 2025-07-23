@@ -303,7 +303,7 @@ class PDFOutlineExtractor:
         try:
             logger.info(f"Processing {pdf_path}")
             
-            # Use the exact-match implementation 
+            # Use the working exact-match implementation 
             from process_pdfs import ExactMatchPDFExtractor
             extractor = ExactMatchPDFExtractor()
             return extractor.extract_outline(pdf_path)

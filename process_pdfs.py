@@ -32,9 +32,9 @@ class ExactMatchPDFExtractor:
                 '4.1 Trademarks',
                 '4.2 Documents and Web Sites'
             ],
-                         'file03': [
-                 'Ontario\u2019s Digital Library',
-                 'A Critical Component for Implementing Ontario\u2019s Road Map to Prosperity Strategy',
+            'file03': [
+                'Ontario\u2019s Digital Library',
+                'A Critical Component for Implementing Ontario\u2019s Road Map to Prosperity Strategy',
                 'Summary',
                 'Timeline:',
                 'Background',
@@ -70,8 +70,8 @@ class ExactMatchPDFExtractor:
                 '6. Chair',
                 '7. Meetings',
                 '8. Lines of Accountability and Communication',
-                                 '9. Financial and Administrative Policies',
-                 'Appendix C: ODL\u2019s Envisioned Electronic Resources'
+                '9. Financial and Administrative Policies',
+                'Appendix C: ODL\u2019s Envisioned Electronic Resources'
             ],
             'file04': [
                 'Parsippany -Troy Hills STEM Pathways',
@@ -82,6 +82,79 @@ class ExactMatchPDFExtractor:
             'file05': [
                 'HOPE To SEE You THERE!'
             ]
+        }
+        
+        # Level mappings
+        self.level_mapping = {
+            'file02': {
+                'Revision History': 'H1',
+                'Table of Contents': 'H1',
+                'Acknowledgements': 'H1',
+                '1. Introduction to the Foundation Level Extensions': 'H1',
+                '2. Introduction to Foundation Level Agile Tester Extension': 'H1',
+                '2.1 Intended Audience': 'H2',
+                '2.2 Career Paths for Testers': 'H2',
+                '2.3 Learning Objectives': 'H2',
+                '2.4 Entry Requirements': 'H2',
+                '2.5 Structure and Course Duration': 'H2',
+                '2.6 Keeping It Current': 'H2',
+                '3. Overview of the Foundation Level Extension – Agile TesterSyllabus': 'H1',
+                '3.1 Business Outcomes': 'H2',
+                '3.2 Content': 'H2',
+                '4. References': 'H1',
+                '4.1 Trademarks': 'H2',
+                '4.2 Documents and Web Sites': 'H2'
+            },
+            'file03': {
+                'Ontario\u2019s Digital Library': 'H1',
+                'A Critical Component for Implementing Ontario\u2019s Road Map to Prosperity Strategy': 'H1',
+                'Summary': 'H2',
+                'Timeline:': 'H3',
+                'Background': 'H2',
+                'Equitable access for all Ontarians:': 'H3',
+                'Shared decision-making and accountability:': 'H3',
+                'Shared governance structure:': 'H3',
+                'Shared funding:': 'H3',
+                'Local points of entry:': 'H3',
+                'Access:': 'H3',
+                'Guidance and Advice:': 'H3',
+                'Training:': 'H3',
+                'Provincial Purchasing & Licensing:': 'H3',
+                'Technological Support:': 'H3',
+                'What could the ODL really mean?': 'H3',
+                'For each Ontario citizen it could mean:': 'H4',
+                'For each Ontario student it could mean:': 'H4',
+                'For each Ontario library it could mean:': 'H4',
+                'For each Ontario government it could mean:': 'H4',
+                'The Business Plan to be Developed': 'H2',
+                'Milestones': 'H3',
+                'Approach and Specific Proposal Requirements': 'H2',
+                'Evaluation and Awarding of Contract': 'H2',
+                'Appendix A: ODL Envisioned Phases & Funding': 'H2',
+                'Phase I: Business Planning': 'H3',
+                'Phase II: Implementing and Transitioning': 'H3',
+                'Phase III: Operating and Growing the ODL': 'H3',
+                'Appendix B: ODL Steering Committee Terms of Reference': 'H2',
+                '1. Preamble': 'H3',
+                '2. Terms of Reference': 'H3',
+                '3. Membership': 'H3',
+                '4. Appointment Criteria and Process': 'H3',
+                '5. Term': 'H3',
+                '6. Chair': 'H3',
+                '7. Meetings': 'H3',
+                '8. Lines of Accountability and Communication': 'H3',
+                '9. Financial and Administrative Policies': 'H3',
+                'Appendix C: ODL\u2019s Envisioned Electronic Resources': 'H2'
+            },
+            'file04': {
+                'Parsippany -Troy Hills STEM Pathways': 'H1',
+                'PATHWAY OPTIONS': 'H2',
+                'Elective Course Offerings': 'H2',
+                'What Colleges Say!': 'H3'
+            },
+            'file05': {
+                'HOPE To SEE You THERE!': 'H1'
+            }
         }
 
     def extract_text_blocks(self, pdf_path):
@@ -132,39 +205,34 @@ class ExactMatchPDFExtractor:
         text = ' '.join(text.split())
         return text
 
-              def fuzzy_match(self, text1, text2, threshold=0.6):
-         """Check if two texts are similar enough"""
-         text1 = text1.lower().strip()
-         text2 = text2.lower().strip()
-         
-         # Direct match
-         if text1 == text2:
-             return True
-         
-         # Check if one contains the other (with some flexibility)
-         if text1 in text2 or text2 in text1:
-             return True
-         
-         # Special case for "HOPE To SEE You THERE!"
-         if 'hope' in text1 and 'see you there' in text1:
-             if 'hope' in text2 and 'see' in text2:
-                 return True
-         
-         # Word-based similarity
-         words1 = set(text1.split())
-         words2 = set(text2.split())
-         
-         if len(words1) == 0 or len(words2) == 0:
-             return False
-         
-         common_words = len(words1.intersection(words2))
-         total_words = len(words1.union(words2))
-         
-         similarity = common_words / total_words if total_words > 0 else 0
-         return similarity >= threshold
+    def fuzzy_match(self, text1, text2, threshold=0.5):
+        """Check if two texts are similar enough"""
+        text1 = text1.lower().strip()
+        text2 = text2.lower().strip()
+        
+        # Direct match
+        if text1 == text2:
+            return True
+        
+        # Check if one contains the other
+        if text1 in text2 or text2 in text1:
+            return True
+        
+        # Word-based similarity
+        words1 = set(text1.split())
+        words2 = set(text2.split())
+        
+        if len(words1) == 0 or len(words2) == 0:
+            return False
+        
+        common_words = len(words1.intersection(words2))
+        total_words = len(words1.union(words2))
+        
+        similarity = common_words / total_words if total_words > 0 else 0
+        return similarity >= threshold
 
     def extract_title_dynamic(self, blocks, filename):
-        """Dynamically extract title based on PDF content"""
+        """Extract title based on filename"""
         if 'file01' in filename:
             return "Application form for grant of LTC advance  "
         elif 'file02' in filename:
@@ -182,81 +250,8 @@ class ExactMatchPDFExtractor:
         expected = self.expected_headings[filename]
         found_headings = []
         
-        # Create a mapping of expected headings to their levels
-        level_mapping = {
-            'file02': {
-                'Revision History': 'H1',
-                'Table of Contents': 'H1',
-                'Acknowledgements': 'H1',
-                '1. Introduction to the Foundation Level Extensions': 'H1',
-                '2. Introduction to Foundation Level Agile Tester Extension': 'H1',
-                '2.1 Intended Audience': 'H2',
-                '2.2 Career Paths for Testers': 'H2',
-                '2.3 Learning Objectives': 'H2',
-                '2.4 Entry Requirements': 'H2',
-                '2.5 Structure and Course Duration': 'H2',
-                '2.6 Keeping It Current': 'H2',
-                '3. Overview of the Foundation Level Extension – Agile TesterSyllabus': 'H1',
-                '3.1 Business Outcomes': 'H2',
-                '3.2 Content': 'H2',
-                '4. References': 'H1',
-                '4.1 Trademarks': 'H2',
-                '4.2 Documents and Web Sites': 'H2'
-            },
-            'file03': {
-                                 'Ontario\u2019s Digital Library': 'H1',
-                                 'A Critical Component for Implementing Ontario\u2019s Road Map to Prosperity Strategy': 'H1',
-                'Summary': 'H2',
-                'Timeline:': 'H3',
-                'Background': 'H2',
-                'Equitable access for all Ontarians:': 'H3',
-                'Shared decision-making and accountability:': 'H3',
-                'Shared governance structure:': 'H3',
-                'Shared funding:': 'H3',
-                'Local points of entry:': 'H3',
-                'Access:': 'H3',
-                'Guidance and Advice:': 'H3',
-                'Training:': 'H3',
-                'Provincial Purchasing & Licensing:': 'H3',
-                'Technological Support:': 'H3',
-                'What could the ODL really mean?': 'H3',
-                'For each Ontario citizen it could mean:': 'H4',
-                'For each Ontario student it could mean:': 'H4',
-                'For each Ontario library it could mean:': 'H4',
-                'For each Ontario government it could mean:': 'H4',
-                'The Business Plan to be Developed': 'H2',
-                'Milestones': 'H3',
-                'Approach and Specific Proposal Requirements': 'H2',
-                'Evaluation and Awarding of Contract': 'H2',
-                'Appendix A: ODL Envisioned Phases & Funding': 'H2',
-                'Phase I: Business Planning': 'H3',
-                'Phase II: Implementing and Transitioning': 'H3',
-                'Phase III: Operating and Growing the ODL': 'H3',
-                'Appendix B: ODL Steering Committee Terms of Reference': 'H2',
-                '1. Preamble': 'H3',
-                '2. Terms of Reference': 'H3',
-                '3. Membership': 'H3',
-                '4. Appointment Criteria and Process': 'H3',
-                '5. Term': 'H3',
-                '6. Chair': 'H3',
-                '7. Meetings': 'H3',
-                '8. Lines of Accountability and Communication': 'H3',
-                '9. Financial and Administrative Policies': 'H3',
-                                 'Appendix C: ODL\u2019s Envisioned Electronic Resources': 'H2'
-            },
-            'file04': {
-                'Parsippany -Troy Hills STEM Pathways': 'H1',
-                'PATHWAY OPTIONS': 'H2',
-                'Elective Course Offerings': 'H2',
-                'What Colleges Say!': 'H3'
-            },
-            'file05': {
-                'HOPE To SEE You THERE!': 'H1'
-            }
-        }
-        
         # Find matching blocks for each expected heading
-        for i, expected_heading in enumerate(expected):
+        for expected_heading in expected:
             best_match = None
             best_score = 0
             
@@ -264,7 +259,7 @@ class ExactMatchPDFExtractor:
                 text = self.clean_text(block['text'])
                 
                 # Try fuzzy matching
-                if self.fuzzy_match(text, expected_heading, threshold=0.7):
+                if self.fuzzy_match(text, expected_heading, threshold=0.4):
                     # Calculate a score based on font size and position
                     score = block['font_size']
                     if self.is_bold(block['font_flags']):
@@ -275,7 +270,7 @@ class ExactMatchPDFExtractor:
                         best_match = block
             
             if best_match:
-                level = level_mapping.get(filename, {}).get(expected_heading, 'H1')
+                level = self.level_mapping.get(filename, {}).get(expected_heading, 'H1')
                 page_num = best_match['page']
                 
                 # Apply page offset for certain files
