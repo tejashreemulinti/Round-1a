@@ -299,66 +299,18 @@ class PDFOutlineExtractor:
         return text.strip()
 
     def extract_outline(self, pdf_path):
-        """Main method to extract outline from PDF"""
+        """Main method to extract outline from PDF - simplified version for testing"""
         try:
             logger.info(f"Processing {pdf_path}")
             
-            # Extract text with formatting
-            pages_data = self.extract_text_with_formatting(pdf_path)
-            if not pages_data:
-                logger.warning(f"No text found in {pdf_path}")
-                return {"title": "Untitled Document", "outline": []}
-            
-            # Analyze font sizes
-            size_levels, font_info = self.analyze_font_sizes(pages_data)
-            
-            # Find body text size for comparison
-            font_sizes = [info['size'] for info in font_info]
-            body_text_size = Counter(font_sizes).most_common(1)[0][0] if font_sizes else 12
-            
-            # Extract title
-            title = self.extract_title(pages_data)
-            
-            # Extract headings
-            outline = []
-            seen_headings = set()  # To avoid duplicates
-            
-            for page in pages_data:
-                for line in page['lines']:
-                    text = line['text'].strip()
-                    
-                    if self.is_likely_heading(text, line['font_size'], line['font_flags'], body_text_size):
-                        cleaned_text = self.clean_heading_text(text)
-                        
-                        # Avoid duplicates and very short headings
-                        if cleaned_text and len(cleaned_text) > 2 and cleaned_text not in seen_headings:
-                            level = self.determine_heading_level(text, line['font_size'], size_levels)
-                            
-                            outline.append({
-                                "level": level,
-                                "text": cleaned_text,
-                                "page": page['page_num']
-                            })
-                            seen_headings.add(cleaned_text)
-            
-            # Sort outline by page number
-            outline.sort(key=lambda x: x['page'])
-            
-            # Limit outline length for performance
-            if len(outline) > 50:
-                outline = outline[:50]
-            
-            result = {
-                "title": title,
-                "outline": outline
-            }
-            
-            logger.info(f"Extracted {len(outline)} headings from {pdf_path}")
-            return result
+            # Use the main file's implementation by importing it
+            from process_pdfs import PDFOutlineExtractor as MainExtractor
+            main_extractor = MainExtractor()
+            return main_extractor.extract_outline(pdf_path)
             
         except Exception as e:
             logger.error(f"Error processing {pdf_path}: {str(e)}")
-            return {"title": "Error Processing Document", "outline": []}
+            return {"title": "", "outline": []}
 
 def get_safe_directory(folder_name):
     """Get a safe directory path that we can write to on Windows"""
